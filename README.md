@@ -15,7 +15,7 @@ mavros package
 --------------
 
 It is the main package, please see it's [README][mrrm].
-Here you may read [installation instructions][inst].
+Here you may read [installation instructions](https://github.com/cmu-rasl/mavros/wiki).
 
 
 mavros\_extras package

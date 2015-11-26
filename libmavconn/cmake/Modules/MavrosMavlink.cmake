@@ -8,6 +8,7 @@ if (NOT DEFINED mavlink_DIALECTS)
   list(APPEND mavlink_DIALECTS "ardupilotmega")
   list(APPEND mavlink_DIALECTS "pixhawk")
   list(APPEND mavlink_DIALECTS "common")
+  list(APPEND mavlink_DIALECTS "cmu_mavlink")
 endif ()
 
 # Select MAVLink dialect

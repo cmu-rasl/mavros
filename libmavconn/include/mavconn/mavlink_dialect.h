@@ -51,6 +51,7 @@ extern "C" mavlink_message_t* mavlink_get_channel_buffer(uint8_t chan);
 #define _DIALECT_ualberta	9
 #define _DIALECT_sensesoar	10
 #define _DIALECT_ASLUAV		11
+#define _DIALECT_cmu_mavlink  12
 
 #  if _DIALECT(MAVLINK_DIALECT) == _DIALECT_ardupilotmega
 #  include <mavlink/v1.0/ardupilotmega/mavlink.h>
@@ -74,6 +75,8 @@ extern "C" mavlink_message_t* mavlink_get_channel_buffer(uint8_t chan);
 #  include <mavlink/v1.0/sensesoar/mavlink.h>
 #elif _DIALECT(MAVLINK_DIALECT) == _DIALECT_ASLUAV
 #  include <mavlink/v1.0/ASLUAV/mavlink.h>
+#elif _DIALECT(MAVLINK_DIALECT) == _DIALECT_cmu_mavlink
+#  include <mavlink/v1.0/cmu_mavlink/mavlink.h>
 #else
 #  error "Unknown MAVLINK_DIALECT"
 #endif

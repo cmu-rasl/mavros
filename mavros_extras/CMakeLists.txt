@@ -73,6 +73,7 @@ add_library(mavros_extras
   src/plugins/vision_speed_estimate.cpp
   src/plugins/vibration.cpp
   src/plugins/cam_imu_sync.cpp
+  src/plugins/l1_adaptive_debug.cpp
 )
 target_link_libraries(mavros_extras
   ${mavros_LIBRARIES}

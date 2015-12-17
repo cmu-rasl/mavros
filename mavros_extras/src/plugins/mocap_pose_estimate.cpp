@@ -54,8 +54,6 @@ namespace mavplugin {
       /** @note Subscribe to Odometry*/
       mp_nh.param("use_odom", use_odom, false);
 
-      ROS_ERROR_NAMED("mocap","%i %i %i",use_tf, use_pose, use_odom);
-
       if (use_tf && !use_pose &&!use_odom) {
         mocap_tf_sub = mp_nh.subscribe("tf", 1, &MocapPoseEstimatePlugin::mocap_tf_cb, this);
       }
@@ -150,24 +148,23 @@ namespace mavplugin {
     /* -*- callback -*- */
     void mocap_odom_cb(const nav_msgs::Odometry::ConstPtr &odom)
     {
-      Eigen::Quaterniond q_enu, q_ned;
+      Eigen::Quaterniond q_nwu, q_ned;
       float q[4];
 
-      Eigen::Matrix3d ENU_to_NED;
-      //ENU TO NED; First rotate about Z by pi/2, then about X by pi
-      ENU_to_NED << 1, 0, 0, 0, -1, 0, 0, 0, -1;
+      Eigen::Matrix3d NWU_to_NED;
+      NWU_to_NED << 1, 0, 0, 0, -1, 0, 0, 0, -1;
 
-      Eigen::Quaterniond FRAME_ROTATE_Q(ENU_to_NED);
+      Eigen::Quaterniond FRAME_ROTATE_Q(NWU_to_NED);
 
-      tf::quaternionMsgToEigen(odom->pose.pose.orientation, q_enu);
-      q_ned = FRAME_ROTATE_Q * q_enu * FRAME_ROTATE_Q.inverse();
+      tf::quaternionMsgToEigen(odom->pose.pose.orientation, q_nwu);
+      q_ned = FRAME_ROTATE_Q * q_nwu * FRAME_ROTATE_Q.inverse();
 
       q[0] = q_ned.w();
       q[1] = q_ned.x();
       q[2] = q_ned.y();
       q[3] = q_ned.z();
 
-      Eigen::Vector3d position = ENU_to_NED * Eigen::Vector3d( odom->pose.pose.position.x, odom->pose.pose.position.y,odom->pose.pose.position.z);
+      Eigen::Vector3d position = NWU_to_NED * Eigen::Vector3d( odom->pose.pose.position.x, odom->pose.pose.position.y,odom->pose.pose.position.z);
 
       mocap_pose_send(odom->header.stamp.toNSec() / 1000,
                       q,

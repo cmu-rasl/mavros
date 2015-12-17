@@ -29,7 +29,7 @@
   <depend>std_msgs</depend>
   <depend>visualization_msgs</depend>
   <depend>urdf</depend>
-
+  <depend>nav_msgs</depend>
   <export>
     <mavros plugin="${prefix}/mavros_plugins.xml" />
     <rosdoc config="rosdoc.yaml" />

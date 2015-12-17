@@ -148,8 +148,8 @@ image:
 mocap:
   # select mocap source
   use_tf: false   # ~mocap/tf
-  use_pose: true  # ~mocap/pose
-
+  use_pose: false  # ~mocap/pose
+  use_odom: true
 # px4flow
 px4flow:
   frame_id: "px4flow"

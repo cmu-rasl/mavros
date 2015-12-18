@@ -27,34 +27,27 @@
 namespace mavutils {
 
 /**
- * @brief Set std::thread name with printf-like mode
- * @param[in] thd std::thread
- * @param[in] name name for thread
- * @return true if success
- *
- * @note Only for Linux target
- * @todo add for other posix system
- */
-inline bool set_thread_name(std::thread &thd, const char *name, ...)
-{
-	pthread_t pth = thd.native_handle();
-	va_list arg_list;
-	va_start(arg_list, name);
+ * @brief Create std::thread and set name with string
+ * @param[in] thread name
+ * @param[in] threading function
+ * @return resulting std::thread
+*/
 
-	char new_name[256];
-	vsnprintf(new_name, sizeof(new_name), name, arg_list);
-	va_end(arg_list);
-	return pthread_setname_np(pth, new_name) == 0;
+// Source: http://stackoverflow.com/a/31897686
+template <class F>
+std::thread launch_named_thread(const std::string& name, F&& f)
+{
+  return std::thread([name, f]() {
+#if (defined(__APPLE__) && defined(__MACH__))
+      pthread_setname_np(name.c_str());
+#elif defined(__linux__)
+      pthread_setname_np(std::thread::native_handle(), name.c_str());
+#else
+      #error Unhandled pthread_setname_np OS
+#endif
+      f();
+    });
 }
-
-/**
- * @brief Set thread name (std::string variation)
- */
-template <typename Thread>
-inline bool set_thread_name(Thread &thd, std::string &name)
-{
-	return set_thread_name(thd, name.c_str());
-};
 
 /**
  * @brief Convert to string objects with operator <<

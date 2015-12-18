@@ -41,7 +41,7 @@ std::thread launch_named_thread(const std::string& name, F&& f)
 #if (defined(__APPLE__) && defined(__MACH__))
       pthread_setname_np(name.c_str());
 #elif defined(__linux__)
-      pthread_setname_np(std::thread::native_handle(), name.c_str());
+      pthread_setname_np(pthread_self(), name.c_str());
 #else
       #error Unhandled pthread_setname_np OS
 #endif

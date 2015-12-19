@@ -15,6 +15,7 @@
  * https://github.com/mavlink/mavros/tree/master/LICENSE.md
  */
 
+#include <random>
 #include <array>
 #include <angles/angles.h>
 #include <eigen_conversions/eigen_msg.h>

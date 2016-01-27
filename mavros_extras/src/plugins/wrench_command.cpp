@@ -69,7 +69,7 @@ namespace mavplugin {
         int num_controls = sizeof(wrc_mavlink_msg.controls) / sizeof(wrc_mavlink_msg.controls[0]);
 
         for (int i = 0; i < num_controls; i++)
-          wrc_msg->data[i] = wrc_mavlink_msg.controls[i];
+          wrc_msg->data.push_back(wrc_mavlink_msg.controls[i]);
 
         wrc_pub_.publish(wrc_msg);
       }

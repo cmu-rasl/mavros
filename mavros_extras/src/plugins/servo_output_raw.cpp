@@ -37,7 +37,7 @@ namespace mavplugin {
     {
       uas_ = &uas;
 		  sor_nh_.param<std::string>("frame_id", frame_id, "servo");
-      sor_pub_ = sor_nh_.advertise<mavros_msgs::ServoOutputRaw>("servo_output_raw", 10);
+      sor_pub_ = sor_nh_.advertise<mavros_msgs::ServoOutputRaw>("data", 10);
     }
 
     const message_map get_rx_handlers() {

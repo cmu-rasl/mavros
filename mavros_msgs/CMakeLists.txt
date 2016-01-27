@@ -34,6 +34,7 @@ add_message_files(
   WaypointList.msg
   L1AdaptiveDebug.msg
   ServoOutputRaw.msg
+  WrenchCommand.msg
 )
 
 add_service_files(

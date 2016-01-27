@@ -29,4 +29,7 @@
   <class name="servo_output_raw" type="mavplugin::ServoOutputRaw" base_class_type="mavplugin::MavRosPlugin">
     <description>Publish servo output raw mavlink stream messages</description>
   </class>
+  <class name="wrench_command" type="mavplugin::WrenchCommand" base_class_type="mavplugin::MavRosPlugin">
+    <description>Publish actuator control mavlink stream messages</description>
+  </class>
 </library>

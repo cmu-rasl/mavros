@@ -75,6 +75,7 @@ add_library(mavros_extras
   src/plugins/vibration.cpp
   src/plugins/cam_imu_sync.cpp
   src/plugins/l1_adaptive_debug.cpp
+  src/plugins/servo_output_raw.cpp
 )
 target_link_libraries(mavros_extras
   ${mavros_LIBRARIES}

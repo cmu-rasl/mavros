@@ -33,6 +33,7 @@ add_message_files(
   Waypoint.msg
   WaypointList.msg
   L1AdaptiveDebug.msg
+  ServoOutputRaw.msg
 )
 
 add_service_files(

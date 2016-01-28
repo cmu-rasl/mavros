@@ -32,4 +32,7 @@
   <class name="wrench_command" type="mavplugin::WrenchCommandPlugin" base_class_type="mavplugin::MavRosPlugin">
     <description>Publish actuator control mavlink stream messages</description>
   </class>
+  <class name="local_position_with_covariance" type="mavplugin::LocalPositionWithCovariancePlugin" base_class_type="mavplugin::MavRosPlugin">
+    <description>Publish estimator status mavlink stream messages</description>
+  </class>
 </library>

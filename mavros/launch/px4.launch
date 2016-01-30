@@ -2,7 +2,7 @@
 	<!-- vim: set ft=xml noet : -->
 	<!-- example launch script for PX4 based FCU's -->
 
-	<arg name="fcu_url" default="/dev/ttyACM0:57600" />
+	<arg name="fcu_url" default="/dev/ttyUSB0:230400" />
 	<arg name="gcs_url" default="" />
 	<arg name="tgt_system" default="1" />
 	<arg name="tgt_component" default="1" />
@@ -17,5 +17,54 @@
 		<arg name="tgt_system" value="$(arg tgt_system)" />
 		<arg name="tgt_component" value="$(arg tgt_component)" />
 		<arg name="log_output" value="$(arg log_output)" />
+
 	</include>
+
+  <node pkg="tf"
+     type="static_transform_publisher"
+     name="static_transform_publisher"
+     output="screen"
+     args=" 0 0 0 0 0 0 1 world vicon 1000"/>
+
+  <arg name="vehicle" value="danaus08"/>
+
+  <node pkg="vicon"
+    type="vicon"
+    name="vicon">
+    <param name="vicon_server" value="192.168.10.1"/>
+    <param name="calib_files_dir" value="$(find mavros)/config"/>
+  </node>
+
+  <node pkg="vicon_odom"
+        type="vicon_odom"
+        name="vicon_odom"
+        required="true"
+        output="screen">
+    <remap from="~vicon" to="/vicon/$(arg vehicle)"/>
+		<remap from="~odom" to="/mavros/mocap/odom"/>
+    <param name="frame_id/fixed" value="vicon"/>
+    <param name="frame_id/base" value="$(arg vehicle)/base"/>
+    <param name="vicon_kf/min_visible_markers" value="4"/>
+    <param name="vicon_kf/min_consecutive_occlusions_for_restart" value="5"/>
+    <param name="vicon_fps" value="200.0"/>
+  </node>
+
+	<arg name="bagfile_record" default="$(arg vehicle)_test"/>
+  <arg name="record_path" default="$(env HOME)/bagfiles/"/>
+  <node pkg="rosbag"
+    type="record"
+    name="record"
+    output="screen"
+    args="-O $(arg record_path)$(arg bagfile_record)
+		/mavros/imu/atm_pressure
+		/mavros/imu/data
+		/mavros/imu/mag
+		/mavros/imu/temperature
+		/mavros/mocap/odom
+		/mavros/local_position_with_covariance/state
+		/mavros/setpoint_raw/target_local
+		/mavros/setpoint_raw/target_attitude
+		/mavros/servo_output_raw/data
+		/mavros/wrench_command/normalized_wrench
+    "/>
 </launch>

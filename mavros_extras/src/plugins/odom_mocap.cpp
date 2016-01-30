@@ -1,0 +1,191 @@
+/**
+ * @brief OdomMocap plugin
+ * @file odom_mocap.cpp
+ * @author John Yao <johnyao@cmu.edu>
+ *
+ * @addtogroup plugin
+ * @{
+ */
+/*
+ * Copyright 2016 John Yao
+ *
+ * This file is part of the mavros package and subject to the license terms
+ * in the top-level LICENSE file of the mavros repository.
+ * https://github.com/mavlink/mavros/tree/master/LICENSE.md
+ */
+
+#include <mavros/mavros_plugin.h>
+#include <pluginlib/class_list_macros.h>
+#include <eigen_conversions/eigen_msg.h>
+
+#include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/TransformStamped.h>
+#include <nav_msgs/Odometry.h>
+
+namespace mavplugin {
+  /**
+   * @brief OdomMocap plugin
+   *
+   * Sends motion capture data to FCU.
+   */
+  class OdomMocapPlugin : public MavRosPlugin
+  {
+  public:
+    OdomMocapPlugin() :
+      mp_nh("~mocap"),
+      uas(nullptr)
+    { };
+
+    void initialize(UAS &uas_)
+    {
+      bool use_tf;
+      bool use_pose;
+      bool use_odom;
+
+      uas = &uas_;
+
+      /** @note For VICON ROS package, subscribe to TransformStamped topic */
+      mp_nh.param("use_tf", use_tf, false);
+
+      /** @note For Optitrack ROS package, subscribe to PoseStamped topic */
+      mp_nh.param("use_pose", use_pose, false);
+
+      /** @note Subscribe to Odometry*/
+      mp_nh.param("use_odom", use_odom, false);
+
+      if (use_tf && !use_pose &&!use_odom) {
+        mocap_tf_sub = mp_nh.subscribe("tf", 1, &OdomMocapPlugin::mocap_tf_cb, this);
+      }
+      else if(use_odom && !use_tf &&!use_pose){
+        mocap_odom_sub = mp_nh.subscribe("odom", 1, &OdomMocapPlugin::mocap_odom_cb, this);
+      }
+
+      else if (use_pose && !use_tf && !use_odom)  {
+        mocap_pose_sub = mp_nh.subscribe("pose", 1, &OdomMocapPlugin::mocap_pose_cb, this);
+      }
+      else {
+        ROS_ERROR_NAMED("mocap", "Use one motion capture source.");
+      }
+    }
+
+    const message_map get_rx_handlers() {
+      return { /* Rx disabled */ };
+    }
+
+  private:
+    ros::NodeHandle mp_nh;
+    UAS *uas;
+
+    ros::Subscriber mocap_pose_sub;
+    ros::Subscriber mocap_tf_sub;
+    ros::Subscriber mocap_odom_sub;
+
+    /* -*- low-level send -*- */
+    void mocap_pose_send
+    (uint64_t usec,
+     float q[4],
+     float x, float y, float z,
+     float vx, float vy, float vz)
+    {
+      mavlink_message_t msg;
+      mavlink_msg_odom_mocap_pack_chan(UAS_PACK_CHAN(uas), &msg,
+                                          usec,
+                                          q,
+                                          x,
+                                          y,
+                                          z,
+                                          vx,
+                                          vy,
+                                          vz);
+      UAS_FCU(uas)->send_message(&msg);
+    }
+
+    /* -*- mid-level helpers -*- */
+    void mocap_pose_cb(const geometry_msgs::PoseStamped::ConstPtr &pose)
+    {
+      Eigen::Quaterniond q_enu;
+      float q[4];
+
+      tf::quaternionMsgToEigen(pose->pose.orientation, q_enu);
+      UAS::quaternion_to_mavlink(
+                                 UAS::transform_frame_enu_ned(q_enu),
+                                 q);
+
+      auto position = UAS::transform_frame_enu_ned(
+                                                   Eigen::Vector3d(
+                                                                   pose->pose.position.x,
+                                                                   pose->pose.position.y,
+                                                                   pose->pose.position.z));
+
+      mocap_pose_send(pose->header.stamp.toNSec() / 1000,
+                      q,
+                      position.x(),
+                      position.y(),
+                      position.z(),
+                      0.0,
+                      0.0,
+                      0.0);
+    }
+
+    /* -*- callbacks -*- */
+    void mocap_tf_cb(const geometry_msgs::TransformStamped::ConstPtr &trans)
+    {
+      Eigen::Quaterniond q_enu;
+      float q[4];
+
+      tf::quaternionMsgToEigen(trans->transform.rotation, q_enu);
+      UAS::quaternion_to_mavlink(
+                                 UAS::transform_frame_enu_ned(q_enu),
+                                 q);
+
+      auto position = UAS::transform_frame_enu_ned(
+                                                   Eigen::Vector3d(
+                                                                   trans->transform.translation.x,
+                                                                   trans->transform.translation.y,
+                                                                   trans->transform.translation.z));
+
+      mocap_pose_send(trans->header.stamp.toNSec() / 1000,
+                      q,
+                      position.x(),
+                      position.y(),
+                      position.z(),
+                      0.0,
+                      0.0,
+                      0.0);
+    }
+
+    /* -*- callback -*- */
+    void mocap_odom_cb(const nav_msgs::Odometry::ConstPtr &odom)
+    {
+      Eigen::Quaterniond q_nwu, q_ned;
+      float q[4];
+
+      Eigen::Matrix3d NWU_to_NED;
+      NWU_to_NED << 1, 0, 0, 0, -1, 0, 0, 0, -1;
+
+      Eigen::Quaterniond FRAME_ROTATE_Q(NWU_to_NED);
+
+      tf::quaternionMsgToEigen(odom->pose.pose.orientation, q_nwu);
+      q_ned = FRAME_ROTATE_Q * q_nwu * FRAME_ROTATE_Q.inverse();
+
+      q[0] = q_ned.w();
+      q[1] = q_ned.x();
+      q[2] = q_ned.y();
+      q[3] = q_ned.z();
+
+      Eigen::Vector3d position = NWU_to_NED * Eigen::Vector3d( odom->pose.pose.position.x, odom->pose.pose.position.y,odom->pose.pose.position.z);
+      Eigen::Vector3d velocity = NWU_to_NED * Eigen::Vector3d( odom->twist.twist.linear.x, odom->twist.twist.linear.y,odom->twist.twist.linear.z);
+
+      mocap_pose_send(odom->header.stamp.toNSec() / 1000,
+                      q,
+                      position.x(),
+                      position.y(),
+                      position.z(),
+                      velocity.x(),
+                      velocity.y(),
+                      velocity.z());
+    }
+  };
+};  // namespace mavplugin
+
+PLUGINLIB_EXPORT_CLASS(mavplugin::OdomMocapPlugin, mavplugin::MavRosPlugin)

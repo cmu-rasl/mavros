@@ -99,6 +99,12 @@ private:
       odom->twist.covariance[27 + i] = pnc.covariance[i+6];
     }
 
+    // HACK: stuff mocap position observation into unused fields of the twist covariance
+    // manually do NED to NWU transform
+    odom->twist.covariance[33] = pnc.covariance[9];
+    odom->twist.covariance[34] = -pnc.covariance[10];
+    odom->twist.covariance[35] = -pnc.covariance[11];
+
    	lpwc_pub.publish(odom);
 
 		if (tf_send) {

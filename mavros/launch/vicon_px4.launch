@@ -1,0 +1,47 @@
+<launch>
+	<arg name="fcu_url" default="/dev/ttyUSB0:230400" />
+	<arg name="gcs_url" default="" />
+	<arg name="tgt_system" default="200" />
+	<arg name="tgt_component" default="50" />
+	<arg name="log_output" default="screen" />
+
+	<include file="$(find mavros)/launch/node.launch">
+		<arg name="pluginlists_yaml" value="$(find mavros)/launch/px4_pluginlists.yaml" />
+		<arg name="config_yaml" value="$(find mavros)/launch/px4_config.yaml" />
+		<arg name="fcu_url" value="$(arg fcu_url)" />
+		<arg name="gcs_url" value="$(arg gcs_url)" />
+		<arg name="tgt_system" value="$(arg tgt_system)" />
+		<arg name="tgt_component" value="$(arg tgt_component)" />
+		<arg name="log_output" value="$(arg log_output)" />
+	</include>
+
+  <node pkg="tf"
+     type="static_transform_publisher"
+     name="static_transform_publisher"
+     output="screen"
+     args=" 0 0 0 0 0 0 1 world vicon 1000"/>
+
+  <arg name="vehicle" default="danaus08"/>
+
+  <node pkg="vicon"
+    type="vicon"
+    name="vicon">
+    <param name="vicon_server" value="192.168.10.1"/>
+    <param name="calib_files_dir" value="$(find mavros)/config"/>
+  </node>
+
+  <node pkg="vicon_odom"
+        type="vicon_odom"
+        name="vicon_odom"
+        required="true"
+        output="screen">
+    <remap from="~vicon" to="/vicon/$(arg vehicle)"/>
+		<remap from="~odom" to="/mavros/mocap/odom"/>
+    <param name="frame_id/fixed" value="vicon"/>
+    <param name="frame_id/base" value="$(arg vehicle)/base"/>
+    <param name="vicon_kf/min_visible_markers" value="4"/>
+    <param name="vicon_kf/min_consecutive_occlusions_for_restart" value="5"/>
+    <param name="vicon_fps" value="200.0"/>
+  </node>
+
+	</launch>

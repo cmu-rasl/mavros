@@ -1,0 +1,84 @@
+#!nsh
+
+set VEHICLE_TYPE mc
+
+set PWM_OUT 5678
+set PWM_MIN 1060
+set PWM_MAX 1860
+set PWM_DISARMED 800
+
+set SYS_USE_IO 1
+
+#Use channels 5678 since channel 1 seems defective
+set MIXER quad_da_5678
+
+# Attitue Control Gains
+param set MC_ROLL_P         11.500
+param set MC_PITCH_P        11.500
+
+param set MC_ROLLRATE_P      0.140
+param set MC_PITCHRATE_P     0.180
+
+param set MC_ROLLRATE_I      0.000
+param set MC_PITCHRATE_I     0.000
+
+param set MC_ROLLRATE_D      0.004
+param set MC_PITCHRATE_D     0.004
+
+param set MC_YAW_P           4.000
+param set MC_YAW_FF          0.500
+
+param set MC_YAWRATE_P       0.700
+param set MC_YAWRATE_I       0.000
+param set MC_YAWRATE_D       0.000
+param set MC_YAWRATE_FF      0.000
+
+# Position Control Gains
+param set MPC_XY_P           1.500
+param set MPC_XY_FF          0.500
+
+param set MPC_XY_VEL_P       0.200
+param set MPC_XY_VEL_I       0.000
+param set MPC_XY_VEL_D       0.020
+
+param set MPC_Z_P            1.600
+param set MPC_Z_FF           0.800
+
+param set MPC_Z_VEL_P        2.000
+param set MPC_Z_VEL_I        0.000
+param set MPC_Z_VEL_D        0.040
+
+param set MPC_USE_GRAV_FF    1
+param set MPC_TOTAL_MASS     0.712
+param set MPC_GRAVITY        9.80665
+param set MPC_MAX_THR_N     14.00
+param set MPC_TKOFF_VZSP     0.03
+
+param set INAV_ENABLED       0
+param set LPE_ENABLED        1
+
+#disable vision input into local position estimator
+param set CBRK_NO_VISION 328754
+
+# Enable Vicon Heading use in attitude_estimator_q
+param set ATT_EXT_HDG_M      2
+
+# Give maximum weight to external (vicon) yaw in attitude_estimator_q
+param set ATT_W_EXT_HDG      1.0
+
+# Lower the vicon noise in local_position_estimator to trust vicon more
+param set LPE_VIC_P          0.005
+
+# Increase the process noise in local_position_estimator to trust vicon more
+param set LPE_ACC_XY         0.05
+param set LPE_ACC_Z          0.05
+param set LPE_PN_B           0.000001
+
+set GPS no
+
+set UAVCAN_ENABLE 0
+
+echo "[init] Starting mavlink at baud 230400"
+set MAV_SYS_ID 208
+set MAV_COMP_ID 08
+set MAVLINK_F "-d /dev/ttyS1 -b 230400 -m custom -x"

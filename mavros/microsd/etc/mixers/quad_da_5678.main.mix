@@ -1,0 +1,23 @@
+Multirotor mixer for PX4FMU
+The first four lines are to mix nulls on to the first four channels
+===========================
+
+Z:
+
+Z:
+
+Z:
+
+Z:
+
+-----------------------------------------------------
+
+This file defines a single mixer for a quadrotor in the danaus configuration.
+After the colon, the first string denotes the vehicle geometry configuration.
+The next three integers are _roll_scale, _pitch_scale, and _yaw_scale in mixer_multirotor.cpp multiplied by 10000.
+The next integer is the deadband (currently unused).
+The next two integers are the min and max PWM limits in microseconds.
+The next two integers are the min and max RPM limits corresponding to the above PWM limits.
+The last two integers are the mantissa (multiplied by 1000) and exponent of the thrust coefficient.
+
+R: 4da 6120 8121 4888 0 1060 1860 3000 20000 8650 -9

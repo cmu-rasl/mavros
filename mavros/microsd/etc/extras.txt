@@ -1,0 +1,13 @@
+#!nsh
+
+param set SYS_USE_IO 1
+param set CBRK_SUPPLY_CHK 894281
+param set CBRK_IO_SAFETY 22027
+
+mavlink stream -d /dev/ttyS1 -s RC_CHANNELS -r 20
+mavlink stream -d /dev/ttyS1 -s RC_CHANNELS_SCALED -r 20
+mavlink stream -d /dev/ttyS1 -s ACTUATOR_CONTROL_TARGET0 -r 10
+mavlink stream -d /dev/ttyS1 -s SERVO_OUTPUT_RAW_0 -r 10
+
+echo "[init] starting streaming streams via mavlink on ttyS1"
+echo "[init] Initialization complete!"

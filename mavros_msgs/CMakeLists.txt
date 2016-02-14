@@ -32,7 +32,6 @@ add_message_files(
   Vibration.msg
   Waypoint.msg
   WaypointList.msg
-  L1AdaptiveDebug.msg
   ServoOutputRaw.msg
   WrenchCommand.msg
 )

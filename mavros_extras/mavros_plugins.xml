@@ -32,4 +32,7 @@
   <class name="local_position_with_covariance" type="mavplugin::LocalPositionWithCovariancePlugin" base_class_type="mavplugin::MavRosPlugin">
     <description>Publish estimator status mavlink stream messages</description>
   </class>
+  <class name="rpm_output" type="mavplugin::RPMOutputPlugin" base_class_type="mavplugin::MavRosPlugin">
+    <description>Publish rpm output mavlink stream messages</description>
+  </class>
 </library>

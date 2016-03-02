@@ -77,6 +77,7 @@ add_library(mavros_extras
   src/plugins/servo_output_raw.cpp
   src/plugins/wrench_command.cpp
   src/plugins/local_position_with_covariance.cpp
+  src/plugins/rpm_output.cpp
 )
 target_link_libraries(mavros_extras
   ${mavros_LIBRARIES}

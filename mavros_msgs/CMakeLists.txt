@@ -34,6 +34,7 @@ add_message_files(
   WaypointList.msg
   ServoOutputRaw.msg
   WrenchCommand.msg
+  RPMOutput.msg
 )
 
 add_service_files(

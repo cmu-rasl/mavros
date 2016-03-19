@@ -15,7 +15,7 @@ namespace mavplugin {
   {
   public:
     MocapCommandPlugin() :
-      nh("~cmd"),
+      nh("~mocap_command"),
       uas(nullptr),
       enable_motors(false) { };
 
@@ -24,10 +24,12 @@ namespace mavplugin {
       uas = &uas_;
 
       cascaded_cmd_sub =
-        nh.subscribe("cascaded", 1, &MocapCommandPlugin::cascadedCommandMessageCallback, this);
+        nh.subscribe("cascaded_cmd", 1,
+                     &MocapCommandPlugin::cascadedCommandMessageCallback, this);
 
       rpm_cmd_sub =
-        nh.subscribe("rpm", 1, &MocapCommandPlugin::rpmCommandMessageCallback, this);
+        nh.subscribe("rpm_cmd", 1,
+                     &MocapCommandPlugin::rpmCommandMessageCallback, this);
 
       motors_sub =
         nh.subscribe("motors", 1, &MocapCommandPlugin::motorMessageCallback, this);

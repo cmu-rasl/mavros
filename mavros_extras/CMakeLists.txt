@@ -16,6 +16,8 @@ find_package(catkin REQUIRED COMPONENTS
   nav_msgs
   visualization_msgs
   urdf
+  quadrotor_srvs
+  quadrotor_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -78,6 +80,7 @@ add_library(mavros_extras
   src/plugins/wrench_command.cpp
   src/plugins/local_position_with_covariance.cpp
   src/plugins/rpm_output.cpp
+  src/plugins/mocap_command.cpp
 )
 target_link_libraries(mavros_extras
   ${mavros_LIBRARIES}

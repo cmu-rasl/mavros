@@ -35,4 +35,7 @@
   <class name="rpm_output" type="mavplugin::RPMOutputPlugin" base_class_type="mavplugin::MavRosPlugin">
     <description>Publish rpm output mavlink stream messages</description>
   </class>
+  <class name="mocap_command" type="mavplugin::MocapCommandPlugin" base_class_type="mavplugin::MavRosPlugin">
+    <description>Publish mocap commands to FCU</description>
+  </class>
 </library>

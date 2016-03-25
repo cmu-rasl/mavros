@@ -38,4 +38,7 @@
   <class name="mocap_command" type="mavplugin::MocapCommandPlugin" base_class_type="mavplugin::MavRosPlugin">
     <description>Publish mocap commands to FCU</description>
   </class>
+  <class name="led_control" type="mavplugin::BlinkMLEDPlugin" base_class_type="mavplugin::MavRosPlugin">
+    <description>Publish LED control input to FCU</description>
+  </class>
 </library>

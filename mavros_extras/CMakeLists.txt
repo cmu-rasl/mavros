@@ -81,6 +81,7 @@ add_library(mavros_extras
   src/plugins/local_position_with_covariance.cpp
   src/plugins/rpm_output.cpp
   src/plugins/mocap_command.cpp
+  src/plugins/blinkm_led_control.cpp
 )
 target_link_libraries(mavros_extras
   ${mavros_LIBRARIES}

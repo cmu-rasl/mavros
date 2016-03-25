@@ -1,8 +1,8 @@
 #include <mavros/mavros_plugin.h>
 #include <pluginlib/class_list_macros.h>
 #include <eigen_conversions/eigen_msg.h>
-#include <quadrotor_msgs/RPMCommand.h>
 #include <quadrotor_msgs/CascadedCommand.h>
+#include <quadrotor_msgs/CascadedCommandGains.h>
 #include <std_msgs/Bool.h>
 #include <quadrotor_srvs/Toggle.h>
 
@@ -17,8 +17,7 @@ namespace mavplugin {
   public:
     MocapCommandPlugin() :
       nh("~mocap_command"),
-      uas(nullptr),
-      enable_motors(false) { };
+      uas(nullptr) { }
 
     void initialize(UAS &uas_)
     {
@@ -28,9 +27,9 @@ namespace mavplugin {
         nh.subscribe("cascaded_cmd", 1,
                      &MocapCommandPlugin::cascadedCommandMessageCallback, this);
 
-      rpm_cmd_sub =
-        nh.subscribe("rpm_cmd", 1,
-                     &MocapCommandPlugin::rpmCommandMessageCallback, this);
+      cascaded_cmd_gains_sub =
+        nh.subscribe("cascaded_cmd_gains", 1,
+                     &MocapCommandPlugin::cascadedCommandGainsMessageCallback, this);
 
       motors_sub =
         nh.subscribe("motors", 1, &MocapCommandPlugin::motorMessageCallback, this);
@@ -48,31 +47,13 @@ namespace mavplugin {
     ros::NodeHandle nh;
     UAS *uas;
 
-    bool enable_motors;
-
     ros::Subscriber cascaded_cmd_sub;
-    ros::Subscriber rpm_cmd_sub;
+    ros::Subscriber cascaded_cmd_gains_sub;
     ros::Subscriber motors_sub;
     ros::ServiceServer motors_service;
 
-    void sendRPMCommand(const quadrotor_msgs::RPMCommand& msg)
-    {
-      // cmd type = 1 (rpm)
-      sendMavlinkCommand(msg.motor_rpm[0], msg.motor_rpm[1],
-                         msg.motor_rpm[2], msg.motor_rpm[3], 1, 0);
-    }
-
     void sendCascadedCommand(const quadrotor_msgs::CascadedCommand& msg)
     {
-      // cmd type = 2 (cascaded)
-      // input types:
-      // 0: thrust setpoint
-      // 1: att (quat) setpoint
-      // 2: angular velocities
-      // 3: angular accelerations
-      // 4: pgains
-      // 5: dgains
-
       Eigen::Vector3d thrust =
         UAS::transform_frame_enu_ned(Eigen::Vector3d(0.0, 0.0, msg.thrust));
 
@@ -92,35 +73,47 @@ namespace mavplugin {
                                                      msg.angular_acceleration.y,
                                                      msg.angular_acceleration.z));
 
-      sendMavlinkCommand(thrust.z(), 0.0f, 0.0f, 0.0f, 2.0f, 0.0f);
-      sendMavlinkCommand(q[0], q[1], q[2], q[3], 2.0f, 1.0f);
-      sendMavlinkCommand(ang_vel.x(), ang_vel.y(), ang_vel.z(), 0.0f, 2.0f, 2.0f);
-      sendMavlinkCommand(ang_acc.x(), ang_acc.y(), ang_acc.z(), 0.0f, 2.0f, 3.0f);
-      sendMavlinkCommand(msg.kR.x, msg.kR.y, msg.kR.z, 0.0f, 2.0f, 4.0f);
-      sendMavlinkCommand(msg.kOm.x, msg.kOm.y, msg.kOm.z, 0.0f, 2.0f, 5.0f);
-    }
-
-    void sendMavlinkCommand(float p1, float p2, float p3, float p4, float p5, float p6)
-    {
-      mavlink_command_long_t cmd;
+      mavlink_cascaded_cmd_t cmd;
       cmd.target_system = uas->get_tgt_system();
-      cmd.target_component = uas->get_tgt_component();
-      cmd.param1 = p1;
-      cmd.param2 = p2;
-      cmd.param3 = p3;
-      cmd.param4 = p4;
-      cmd.param5 = p5;
-      cmd.param6 = p6;
-      cmd.param7 = enable_motors ? 1.0f : 0.0f;
+      cmd.thrust = thrust(2);
+      for (unsigned int i = 0; i < 4; i++)
+        cmd.q[i] = q[i];
+      for (unsigned int i = 0; i < 3; i++)
+        cmd.ang_vel[i] = ang_vel[i];
+      for (unsigned int i = 0; i < 3; i++)
+        cmd.ang_acc[i] = ang_acc[i];
 
       mavlink_message_t mmsg;
-      mavlink_msg_command_long_encode(0, 0, &mmsg, &cmd);
+      mavlink_msg_cascaded_cmd_encode(0, 0, &mmsg, &cmd);
       UAS_FCU(uas)->send_message(&mmsg);
     }
 
-    void rpmCommandMessageCallback(const quadrotor_msgs::RPMCommand::ConstPtr& msg)
+    void sendCascadedCommandGains(const quadrotor_msgs::CascadedCommandGains& msg)
     {
-      sendRPMCommand(*msg);
+      mavlink_cascaded_cmd_gains_t cmd;
+      cmd.target_system = uas->get_tgt_system();
+      cmd.kR[0] = msg.kR.x;
+      cmd.kR[1] = msg.kR.y;
+      cmd.kR[2] = msg.kR.z;
+
+      cmd.kOm[0] = msg.kOm.x;
+      cmd.kOm[1] = msg.kOm.y;
+      cmd.kOm[2] = msg.kOm.z;
+
+      mavlink_message_t mmsg;
+      mavlink_msg_cascaded_cmd_gains_encode(0, 0, &mmsg, &cmd);
+      UAS_FCU(uas)->send_message(&mmsg);
+    }
+
+    void sendMocapMotorState(bool enable_motors)
+    {
+      mavlink_mocap_motor_state_t cmd;
+      cmd.target_system = uas->get_tgt_system();
+      cmd.state = enable_motors ? 1 : 0;
+
+      mavlink_message_t mmsg;
+      mavlink_msg_mocap_motor_state_encode(0, 0, &mmsg, &cmd);
+      UAS_FCU(uas)->send_message(&mmsg);
     }
 
     void cascadedCommandMessageCallback(const quadrotor_msgs::CascadedCommand::ConstPtr& msg)
@@ -128,15 +121,21 @@ namespace mavplugin {
       sendCascadedCommand(*msg);
     }
 
+    void cascadedCommandGainsMessageCallback(const quadrotor_msgs::CascadedCommandGains::ConstPtr& msg)
+    {
+      sendCascadedCommandGains(*msg);
+    }
+
     void motorMessageCallback(const std_msgs::Bool::ConstPtr& msg)
     {
-      enable_motors = msg->data;
+      sendMocapMotorState(msg->data);
     }
 
     bool motorServiceCallback(quadrotor_srvs::Toggle::Request& mreq,
                               quadrotor_srvs::Toggle::Response& mres)
     {
-      mres.status = enable_motors = mreq.enable;
+      mres.status = mreq.enable;
+      sendMocapMotorState(mreq.enable);
       return true;
     }
   };

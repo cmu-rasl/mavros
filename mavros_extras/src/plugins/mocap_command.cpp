@@ -1,6 +1,7 @@
 #include <mavros/mavros_plugin.h>
 #include <pluginlib/class_list_macros.h>
 #include <eigen_conversions/eigen_msg.h>
+#include <quadrotor_msgs/RPMCommand.h>
 #include <quadrotor_msgs/CascadedCommand.h>
 #include <quadrotor_msgs/CascadedCommandGains.h>
 #include <std_msgs/Bool.h>
@@ -22,6 +23,10 @@ namespace mavplugin {
     void initialize(UAS &uas_)
     {
       uas = &uas_;
+
+      rpm_cmd_sub =
+        nh.subscribe("rpm_cmd", 1,
+                     &MocapCommandPlugin::rpmCommandMessageCallback, this);
 
       cascaded_cmd_sub =
         nh.subscribe("cascaded_cmd", 1,
@@ -47,10 +52,25 @@ namespace mavplugin {
     ros::NodeHandle nh;
     UAS *uas;
 
+    ros::Subscriber rpm_cmd_sub;
     ros::Subscriber cascaded_cmd_sub;
     ros::Subscriber cascaded_cmd_gains_sub;
     ros::Subscriber motors_sub;
     ros::ServiceServer motors_service;
+
+    void sendRPMCommand(const quadrotor_msgs::RPMCommand& msg)
+    {
+      mavlink_mocap_rpm_cmd_t cmd;
+      cmd.target_system = uas->get_tgt_system();
+      cmd.ninputs = 4;
+
+      for (unsigned int i = 0; i < 4; i++)
+        cmd.input[i] = msg.motor_rpm[i];
+
+      mavlink_message_t mmsg;
+      mavlink_msg_mocap_rpm_cmd_encode(0, 0, &mmsg, &cmd);
+      UAS_FCU(uas)->send_message(&mmsg);
+    }
 
     void sendCascadedCommand(const quadrotor_msgs::CascadedCommand& msg)
     {
@@ -114,6 +134,11 @@ namespace mavplugin {
       mavlink_message_t mmsg;
       mavlink_msg_mocap_motor_state_encode(0, 0, &mmsg, &cmd);
       UAS_FCU(uas)->send_message(&mmsg);
+    }
+
+    void rpmCommandMessageCallback(const quadrotor_msgs::RPMCommand::ConstPtr& msg)
+    {
+      sendRPMCommand(*msg);
     }
 
     void cascadedCommandMessageCallback(const quadrotor_msgs::CascadedCommand::ConstPtr& msg)

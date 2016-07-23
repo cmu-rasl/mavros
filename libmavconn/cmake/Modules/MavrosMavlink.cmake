@@ -7,11 +7,11 @@ find_package(mavlink REQUIRED)
 if (NOT DEFINED mavlink_DIALECTS)
   list(APPEND mavlink_DIALECTS "ardupilotmega")
   list(APPEND mavlink_DIALECTS "common")
-  list(APPEND mavlink_DIALECTS "cmu_mavlink")
+  list(APPEND mavlink_DIALECTS "custom")
 endif ()
 
 # Select MAVLink dialect
-set(MAVLINK_DIALECT "cmu_mavlink" CACHE STRING "MAVLink dialect selector")
+set(MAVLINK_DIALECT "custom" CACHE STRING "MAVLink dialect selector")
 set_property(CACHE MAVLINK_DIALECT PROPERTY STRINGS ${mavlink_DIALECTS})
 
 # check that selected dialect are known

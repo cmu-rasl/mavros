@@ -18,6 +18,7 @@ add_message_files(
   FileEntry.msg
   GlobalPositionTarget.msg
   HomePosition.msg
+  L1AdaptiveDebug.msg
   ManualControl.msg
   Mavlink.msg
   OpticalFlowRad.msg
@@ -28,10 +29,12 @@ add_message_files(
   RCOut.msg
   RadioStatus.msg
   State.msg
+  ServoOutputRaw.msg
   VFR_HUD.msg
   Vibration.msg
   Waypoint.msg
   WaypointList.msg
+  WrenchCommand.msg
 )
 
 add_service_files(

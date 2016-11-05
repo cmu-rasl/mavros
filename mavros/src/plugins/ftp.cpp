@@ -340,7 +340,11 @@ private:
 			handle_req_nack(req);
 		else {
 			ROS_ERROR_NAMED("ftp", "FTP: Unknown request response: %u", req.header()->opcode);
-			go_idle(true, EBADRQC);
+#if (defined(__APPLE__) && defined(__MACH__))
+                        go_idle(true, ENOMSG);
+#else
+		  	 			go_idle(true, EBADRQC);
+#endif
 		}
 	}
 
@@ -355,7 +359,11 @@ private:
 		case OP_CHECKSUM:	handle_ack_checksum(req);	break;
 		default:
 			ROS_ERROR_NAMED("ftp", "FTP: wrong op_state");
-			go_idle(true, EBADRQC);
+#if (defined(__APPLE__) && defined(__MACH__))
+                        go_idle(true, EINVAL);
+#else
+						go_idle(true, EBADRQC);
+#endif
 		}
 	}
 
@@ -375,7 +383,11 @@ private:
 		else if (error_code == FTPRequest::kErrInvalidDataSize)
 			r_errno = EMSGSIZE;
 		else if (error_code == FTPRequest::kErrInvalidSession)
+#if (defined(__APPLE__) && defined(__MACH__))
+			r_errno = EBADF;
+#else
 			r_errno = EBADFD;
+#endif
 		else if (error_code == FTPRequest::kErrNoSessionsAvailable)
 			r_errno = EMFILE;
 		else if (error_code == FTPRequest::kErrUnknownCommand)
@@ -404,7 +416,11 @@ private:
 		if (hdr->offset != list_offset) {
 			ROS_ERROR_NAMED("ftp", "FTP: Wring list offset, req %u, ret %u",
 					list_offset, hdr->offset);
-			go_idle(true, EBADE);
+#if (defined(__APPLE__) && defined(__MACH__))
+			go_idle(true, EBADMSG);
+#else
+  			go_idle(true, EBADE);
+#endif
 			return;
 		}
 
@@ -474,13 +490,21 @@ private:
 		ROS_DEBUG_NAMED("ftp", "FTP:m: ACK Read SZ(%u)", hdr->size);
 		if (hdr->session != active_session) {
 			ROS_ERROR_NAMED("ftp", "FTP:Read unexpected session");
-			go_idle(true, EBADSLT);
+#if (defined(__APPLE__) && defined(__MACH__))
+                        go_idle(true, ENOSR);
+#else
+  			go_idle(true, EBADSLT);
+#endif
 			return;
 		}
 
 		if (hdr->offset != read_offset) {
 			ROS_ERROR_NAMED("ftp", "FTP:Read different offset");
-			go_idle(true, EBADE);
+#if (defined(__APPLE__) && defined(__MACH__))
+			go_idle(true, EILSEQ);
+#else
+ 			go_idle(true, EBADE);
+#endif
 			return;
 		}
 
@@ -507,13 +531,21 @@ private:
 		ROS_DEBUG_NAMED("ftp", "FTP:m: ACK Write SZ(%u)", hdr->size);
 		if (hdr->session != active_session) {
 			ROS_ERROR_NAMED("ftp", "FTP:Write unexpected session");
-			go_idle(true, EBADSLT);
+#if (defined(__APPLE__) && defined(__MACH__))
+                        go_idle(true, ENOSR);
+#else
+  			go_idle(true, EBADSLT);
+#endif
 			return;
 		}
 
 		if (hdr->offset != write_offset) {
 			ROS_ERROR_NAMED("ftp", "FTP:Write different offset");
+#if (defined(__APPLE__) && defined(__MACH__))
+			go_idle(true, EILSEQ);
+#else
 			go_idle(true, EBADE);
+#endif
 			return;
 		}
 

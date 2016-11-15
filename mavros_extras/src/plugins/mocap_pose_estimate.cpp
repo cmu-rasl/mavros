@@ -49,9 +49,10 @@ public:
 
 		/** @note For Optitrack ROS package, subscribe to PoseStamped topic */
 		mp_nh.param("use_pose", use_pose, true);
-
+		use_tf = true;
+		use_pose = false;
 		if (use_tf && !use_pose) {
-			mocap_tf_sub = mp_nh.subscribe("tf", 1, &MocapPoseEstimatePlugin::mocap_tf_cb, this);
+			mocap_tf_sub = mp_nh.subscribe("/vicon/danaus18/danaus18", 1, &MocapPoseEstimatePlugin::mocap_tf_cb, this);
 		}
 		else if (use_pose && !use_tf) {
 			mocap_pose_sub = mp_nh.subscribe("pose", 1, &MocapPoseEstimatePlugin::mocap_pose_cb, this);

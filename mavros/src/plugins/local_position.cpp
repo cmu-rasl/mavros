@@ -60,11 +60,13 @@ public:
 		local_position = lp_nh.advertise<geometry_msgs::PoseStamped>("pose", 10);
 		local_velocity = lp_nh.advertise<geometry_msgs::TwistStamped>("velocity", 10);
 		local_odom = lp_nh.advertise<nav_msgs::Odometry>("odom",10);
+		vision_odom = lp_nh.advertise<nav_msgs::Odometry>("vision_odom",10);
 	}
 
 	const message_map get_rx_handlers() {
 		return {
-			       MESSAGE_HANDLER(MAVLINK_MSG_ID_LOCAL_POSITION_NED, &LocalPositionPlugin::handle_local_position_ned)
+			       MESSAGE_HANDLER(MAVLINK_MSG_ID_LOCAL_POSITION_NED, &LocalPositionPlugin::handle_local_position_ned),
+			       MESSAGE_HANDLER(MAVLINK_MSG_ID_VISION_POSITION_ESTIMATE, &LocalPositionPlugin::handle_vision_position_estimate)
 		};
 	}
 
@@ -74,7 +76,7 @@ private:
 
 	ros::Publisher local_position;
 	ros::Publisher local_velocity;
-	ros::Publisher local_odom;
+	ros::Publisher local_odom, vision_odom;
 
 	std::string frame_id;		//!< frame for Pose
 	std::string tf_frame_id;	//!< origin for TF
@@ -155,6 +157,34 @@ private:
 			tf::quaternionEigenToMsg(ned_orientation,ned_aircraft_tf.transform.rotation);
 			uas->tf2_broadcaster.sendTransform(ned_aircraft_tf);
 		}
+	}
+	void handle_vision_position_estimate(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+		mavlink_vision_position_estimate_t vision_pos;
+		mavlink_msg_vision_position_estimate_decode(msg, &vision_pos);
+
+		//--------------- Transform FCU position and Velocity Data ---------------//
+		auto enu_position = UAS::transform_frame_ned_enu(Eigen::Vector3d(vision_pos.x, vision_pos.y, vision_pos.z));
+		//--------------- Get Odom Information ---------------//
+		// Note this orientation describes baselink->ENU transform
+		auto enu_orientation_msg = uas->get_attitude_orientation();
+		Eigen::Quaterniond enu_orientation;
+		tf::quaternionMsgToEigen(enu_orientation_msg,enu_orientation);
+		//--------------- Generate Message Pointers ---------------//
+		auto pose = boost::make_shared<geometry_msgs::PoseStamped>();
+		auto odom = boost::make_shared<nav_msgs::Odometry>();
+
+		pose->header = uas->synchronized_header(frame_id, vision_pos.usec);
+
+		tf::pointEigenToMsg(enu_position, pose->pose.position);
+		pose->pose.orientation = enu_orientation_msg;
+
+		odom->header.stamp = pose->header.stamp;
+		odom->header.frame_id = tf_frame_id;
+		odom->child_frame_id = tf_child_frame_id;
+		odom->pose.pose = pose->pose;
+
+		//--------------- Publish Data ---------------//
+		vision_odom.publish(odom);
 	}
 };
 };	// namespace mavplugin

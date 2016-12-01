@@ -136,6 +136,7 @@ private:
 				position.x(),
 				position.y(),
 				position.z());
+usleep(16667);
 	}
 };
 };	// namespace mavplugin

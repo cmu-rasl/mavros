@@ -34,7 +34,9 @@ class MocapPoseEstimatePlugin : public MavRosPlugin
 public:
 	MocapPoseEstimatePlugin() :
 		mp_nh("~mocap"),
-		uas(nullptr)
+		uas(nullptr),
+		last_time_us_(0.0f),
+		rate_(60.0f)
 	{ };
 
 	void initialize(UAS &uas_)
@@ -50,12 +52,17 @@ public:
 		/** @note For Optitrack ROS package, subscribe to PoseStamped topic */
 		mp_nh.param("use_pose", use_pose, true);
 
+		mp_nh.param("rate", rate_, 60.0f);
+
 		if (use_tf && !use_pose) {
 			mocap_tf_sub = mp_nh.subscribe("tf", 1, &MocapPoseEstimatePlugin::mocap_tf_cb, this);
-		}
+			std::cout<<"[Mocap Pose Plugin] Using tf!!!\n";		
+}
 		else if (use_pose && !use_tf) {
 			mocap_pose_sub = mp_nh.subscribe("pose", 1, &MocapPoseEstimatePlugin::mocap_pose_cb, this);
-		}
+		
+			std::cout<<"[Mocap Pose Plugin] Using PoseStamped!!!\n";			
+}
 		else {
 			ROS_ERROR_NAMED("mocap", "Use one motion capture source.");
 		}
@@ -71,7 +78,9 @@ private:
 
 	ros::Subscriber mocap_pose_sub;
 	ros::Subscriber mocap_tf_sub;
-
+	
+	double last_time_us_;
+	float  rate_;
 	/* -*- low-level send -*- */
 	void mocap_pose_send
 		(uint64_t usec,
@@ -130,13 +139,15 @@ private:
 					trans->transform.translation.x,
 					trans->transform.translation.y,
 					trans->transform.translation.z));
-
-		mocap_pose_send(trans->header.stamp.toNSec() / 1000,
+		double time_us = trans->header.stamp.toSec();
+		if(time_us - last_time_us_ > 1.0f/rate_){
+			mocap_pose_send(time_us,
 				q,
 				position.x(),
 				position.y(),
 				position.z());
-usleep(16667);
+		last_time_us_ = time_us;
+		}
 	}
 };
 };	// namespace mavplugin

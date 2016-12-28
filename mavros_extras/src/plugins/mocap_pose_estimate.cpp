@@ -22,7 +22,8 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TransformStamped.h>
 
-
+#include <thread>
+#include <condition_variable>
 namespace mavplugin {
 /**
  * @brief MocapPoseEstimate plugin
@@ -33,10 +34,13 @@ class MocapPoseEstimatePlugin : public MavRosPlugin
 {
 public:
 	MocapPoseEstimatePlugin() :
+		is_init_(false),
 		mp_nh("~mocap"),
 		uas(nullptr),
 		last_time_us_(0.0f),
-		rate_(60.0f)
+		last_last_(0.0f),
+		rate_(60.0f),
+		thread_(&MocapPoseEstimatePlugin::publish_mavlink_message_at_rate, this)
 	{ };
 
 	void initialize(UAS &uas_)
@@ -66,6 +70,9 @@ public:
 		else {
 			ROS_ERROR_NAMED("mocap", "Use one motion capture source.");
 		}
+		//Start thread
+		is_init_ = true;
+		cv_.notify_one();	
 	}
 
 	const message_map get_rx_handlers() {
@@ -78,9 +85,36 @@ private:
 
 	ros::Subscriber mocap_pose_sub;
 	ros::Subscriber mocap_tf_sub;
-	
-	double last_time_us_;
-	float  rate_;
+	ros::Time last_ros_;
+	double last_time_us_, last_last_;
+	float  rate_, last_q_[4];
+	bool is_init_;
+	Eigen::Vector3d last_pos_;
+	std::mutex lock_;
+	std::condition_variable cv_;
+	std::thread thread_;
+	void publish_mavlink_message_at_rate(){
+		//Wait until we're ready to initialize
+		std::cout<<"Waiting for init...\n";
+		{
+		std::unique_lock<std::mutex> locker(lock_);
+		cv_.wait(locker, [&]{return is_init_;});
+		}
+		auto frame_duration = std::chrono::duration<double>(1.0/rate_);
+		do{
+			auto start_time = std::chrono::steady_clock::now();
+			auto end_time = start_time + frame_duration;
+			{
+				std::lock_guard<std::mutex> locker(lock_);
+				if(last_last_ == 0.0f || last_time_us_ - last_last_ > 1e-10){
+					mocap_pose_send(last_time_us_, last_q_, last_pos_[0], last_pos_[1], last_pos_[2]);
+					last_last_ = last_time_us_;
+				}	
+}
+			last_ros_ = ros::Time::now();
+			std::this_thread::sleep_until(end_time);
+		}while(ros::ok());
+	}
 	/* -*- low-level send -*- */
 	void mocap_pose_send
 		(uint64_t usec,
@@ -139,15 +173,14 @@ private:
 					trans->transform.translation.x,
 					trans->transform.translation.y,
 					trans->transform.translation.z));
-		double time_us = trans->header.stamp.toSec();
-		if(time_us - last_time_us_ > 1.0f/rate_){
-			mocap_pose_send(time_us,
-				q,
-				position.x(),
-				position.y(),
-				position.z());
-		last_time_us_ = time_us;
+		double time_us = trans->header.stamp.toNSec() / 1000;
+		{
+			std::lock_guard<std::mutex> locker(lock_);
+			last_time_us_ = time_us;
+			for(int i=0;i<4;i++){last_q_[i] = q[i];}
+			last_pos_ = position;
 		}
+		
 	}
 };
 };	// namespace mavplugin

@@ -70,9 +70,6 @@ public:
 		else {
 			ROS_ERROR_NAMED("mocap", "Use one motion capture source.");
 		}
-		//Start thread
-		is_init_ = true;
-		cv_.notify_one();	
 	}
 
 	const message_map get_rx_handlers() {
@@ -179,6 +176,11 @@ private:
 			last_time_us_ = time_us;
 			for(int i=0;i<4;i++){last_q_[i] = q[i];}
 			last_pos_ = position;
+			//Start thread
+			if(!is_init_){
+				is_init_ = true;
+				cv_.notify_one();
+			}
 		}
 		
 	}

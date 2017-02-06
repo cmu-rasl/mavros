@@ -133,19 +133,16 @@ private:
 	{
 		Eigen::Quaterniond q_enu;
 		float q[4];
-
 		tf::quaternionMsgToEigen(pose->pose.orientation, q_enu);
 		UAS::quaternion_to_mavlink(
 				UAS::transform_orientation_enu_ned(
 					UAS::transform_orientation_baselink_aircraft(q_enu)),
 				q);
-
 		auto position = UAS::transform_frame_enu_ned(
 				Eigen::Vector3d(
 					pose->pose.position.x,
 					pose->pose.position.y,
 					pose->pose.position.z));
-
 		mocap_pose_send(pose->header.stamp.toNSec() / 1000,
 				q,
 				position.x(),
@@ -164,7 +161,6 @@ private:
 				UAS::transform_orientation_enu_ned(
 					UAS::transform_orientation_baselink_aircraft(q_enu)),
 				q);
-
 		auto position = UAS::transform_frame_enu_ned(
 				Eigen::Vector3d(
 					trans->transform.translation.x,

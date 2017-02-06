@@ -113,12 +113,15 @@ private:
 		}
 		last_transform_stamp = stamp;
 
-		auto position = UAS::transform_frame_enu_ned(Eigen::Vector3d(tr.translation()));
-		auto rpy = UAS::quaternion_to_rpy(
-				UAS::transform_orientation_enu_ned(Eigen::Quaterniond(tr.rotation())));
+		//auto position = UAS::transform_frame_enu_ned(Eigen::Vector3d(tr.translation()));
+		//auto rpy = UAS::quaternion_to_rpy(
+		//		UAS::transform_orientation_enu_ned(Eigen::Quaterniond(tr.rotation())));
 
+		Eigen::Quaternion<double> cam_in_body(Eigen::AngleAxisd(-M_PI/2.0f, Eigen::Vector3d::UnitZ()));
+		Eigen::Vector3d position = tr.translation();
+		auto rpy = UAS::quaternion_to_rpy(Eigen::Quaterniond( tr.rotation()));
 		vision_position_estimate(stamp.toNSec() / 1000,
-				position.x(), position.y(), position.z(),
+				position(0), position(1), position(2),
 				rpy.x(), rpy.y(), rpy.z());
 	}
 

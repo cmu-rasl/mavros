@@ -61,13 +61,13 @@ public:
 
 		cmd_nh.param("use_comp_id_system_control", use_comp_id_system_control, false);
 
-		command_long_srv = cmd_nh.advertiseService("command", &CommandPlugin::command_long_cb, this);
-		command_int_srv = cmd_nh.advertiseService("command_int", &CommandPlugin::command_int_cb, this);
-		arming_srv = cmd_nh.advertiseService("arming", &CommandPlugin::arming_cb, this);
-		set_home_srv = cmd_nh.advertiseService("set_home", &CommandPlugin::set_home_cb, this);
-		takeoff_srv = cmd_nh.advertiseService("takeoff", &CommandPlugin::takeoff_cb, this);
-		land_srv = cmd_nh.advertiseService("land", &CommandPlugin::land_cb, this);
-		trigger_srv = cmd_nh.advertiseService("trigger_control", &CommandPlugin::trigger_control_cb, this);
+	//	command_long_srv = cmd_nh.advertiseService("command", &CommandPlugin::command_long_cb, this);
+	//	command_int_srv = cmd_nh.advertiseService("command_int", &CommandPlugin::command_int_cb, this);
+	//	arming_srv = cmd_nh.advertiseService("arming", &CommandPlugin::arming_cb, this);
+	//	set_home_srv = cmd_nh.advertiseService("set_home", &CommandPlugin::set_home_cb, this);
+	//	takeoff_srv = cmd_nh.advertiseService("takeoff", &CommandPlugin::takeoff_cb, this);
+	//	land_srv = cmd_nh.advertiseService("land", &CommandPlugin::land_cb, this);
+		//trigger_srv = cmd_nh.advertiseService("trigger_control", &CommandPlugin::trigger_control_cb, this);
 	}
 
 	const message_map get_rx_handlers() {

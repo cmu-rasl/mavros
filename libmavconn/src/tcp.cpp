@@ -83,8 +83,9 @@ MAVConnTCPClient::MAVConnTCPClient(uint8_t system_id, uint8_t component_id,
 	io_service.post(boost::bind(&MAVConnTCPClient::do_recv, this));
 
 	// run io_service for async io
-	std::thread t(boost::bind(&io_service::run, &this->io_service));
-	mavutils::set_thread_name(t, "MAVConnTCPc%d", channel);
+        std::thread t =
+          mavutils::launch_named_thread("MAVConnTCP" + std::to_string(channel),
+                                        boost::bind(&io_service::run, &this->io_service));
 	io_thread.swap(t);
 }
 
@@ -272,8 +273,9 @@ MAVConnTCPServer::MAVConnTCPServer(uint8_t system_id, uint8_t component_id,
 	io_service.post(boost::bind(&MAVConnTCPServer::do_accept, this));
 
 	// run io_service for async io
-	std::thread t(boost::bind(&io_service::run, &this->io_service));
-	mavutils::set_thread_name(t, "MAVConnTCPs%d", channel);
+        std::thread t =
+           mavutils::launch_named_thread("MAVConnTCPs" + std::to_string(channel),
+                                         boost::bind(&io_service::run, &this->io_service));
 	io_thread.swap(t);
 }
 

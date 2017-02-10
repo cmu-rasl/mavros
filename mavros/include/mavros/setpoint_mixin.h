@@ -74,8 +74,10 @@ public:
 		tf_thd_name = _thd_name;
 		tf_transform_cb = boost::bind(cbp, static_cast<D *>(this), _1);
 
-		std::thread t(boost::bind(&TF2ListenerMixin::tf_listener, this));
-		mavutils::set_thread_name(t, tf_thd_name);
+               std::thread t =
+                  mavutils::launch_named_thread(tf_thd_name,
+                                                boost::bind(&TF2ListenerMixin::tf_listener,
+                                                            this));
 		tf_thread.swap(t);
 	}
 

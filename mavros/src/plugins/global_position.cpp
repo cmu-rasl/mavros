@@ -29,6 +29,8 @@
 #include <geometry_msgs/TwistStamped.h>
 #include <geometry_msgs/TransformStamped.h>
 
+using namespace std;
+
 namespace mavplugin {
 
 
